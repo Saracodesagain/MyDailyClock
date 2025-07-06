@@ -57,3 +57,19 @@ canvas {
   height: 16px;
   border-radius: 4px;
 }
+
+.back-button {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  color: white;
+  background-color: #aaa;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+.back-button:hover {
+  background-color: #888;
+}
+
