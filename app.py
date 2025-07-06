@@ -19,6 +19,11 @@ def index_cute():
     return render_template('indexcute.html')  # optional for pink version
 
 
+@app.route('/indexBlocky')
+def index_blocky():
+    return render_template('indexBlocky.html')  # optional for blocky version
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)

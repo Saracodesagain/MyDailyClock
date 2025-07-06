@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Daily Clock – Blocky Forest</title>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #cbe896;
+      font-family: 'VT323', monospace;
+      color: #2c3e1f;
+      text-align: center;
+      padding: 2rem;
+    }
+    h1, h2 {
+      font-size: 2.5rem;
+      color: #2c3e1f;
+      margin: 1rem 0;
+    }
+    a.back-button {
+      display: inline-block;
+      margin-bottom: 2rem;
+      padding: 0.6rem 1.2rem;
+      background-color: #4e7e39;
+      color: white;
+      text-decoration: none;
+      font-size: 1.2rem;
+      border-radius: 6px;
+    }
+    a.back-button:hover {
+      background-color: #385d2c;
+    }
+    #activityForm button {
+      background-color: #6da34d;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 14px;
+      margin: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #activityForm button:hover {
+      background-color: #4e7e39;
+    }
+    select, input {
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      padding: 6px;
+      margin: 4px;
+    }
+    select option {
+      background-color: white;
+      color: black;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      background-color: #fff;
+      margin: 4px;
+      box-shadow: 2px 2px 0px #666;
+    }
+    .legend-box {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #444;
+    }
+    .creeper {
+      display: grid;
+      grid-template-columns: repeat(6, 20px);
+      grid-template-rows: repeat(6, 20px);
+      justify-content: center;
+      margin: 0 auto 1rem auto;
+      gap: 2px;
+    }
+    .creeper div {
+      width: 20px;
+      height: 20px;
+    }
+    .green { background-color: #6da34d; }
+    .black { background-color: #222; }
+    .brown { background-color: #5c4033; }
+    .lightgreen { background-color: #a6d75b; }
+    .clocks {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+      margin-top: 2rem;
+    }
+    .clock-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <a href="/" class="back-button">← Back to Theme Selector</a>
+  <div class="creeper">
+    <div class="green"></div><div class="lightgreen"></div><div class="black"></div><div class="black"></div><div class="lightgreen"></div><div class="green"></div>
+    <div class="green"></div><div class="green"></div><div class="green"></div><div class="black"></div><div class="green"></div><div class="lightgreen"></div>
+    <div class="black"></div><div class="black"></div><div class="black"></div><div class="black"></div><div class="black"></div><div class="black"></div>
+    <div class="green"></div><div class="lightgreen"></div><div class="black"></div><div class="black"></div><div class="lightgreen"></div><div class="green"></div>
+    <div class="green"></div><div class="brown"></div><div class="green"></div><div class="brown"></div><div class="green"></div><div class="lightgreen"></div>
+    <div class="lightgreen"></div><div class="green"></div><div class="black"></div><div class="green"></div><div class="green"></div><div class="green"></div>
+  </div>
+  <h1>Blocky Forest Clock</h1>
+
+  <form id="activityForm">
+    <h2>Set Your Day</h2>
+    <input type="text" id="username" placeholder="Your name" required>
+    <input type="text" id="label" placeholder="Activity name" required>
+    <input type="time" id="from" required>
+    <input type="time" id="to" required>
+    <select id="color" required>
+      <option value="#6da34d" style="background-color:#6da34d; color:white;">Grass</option>
+      <option value="#4e7e39" style="background-color:#4e7e39; color:white;">Leaves</option>
+      <option value="#a0522d" style="background-color:#a0522d; color:white;">Dirt</option>
+      <option value="#87ceeb" style="background-color:#87ceeb; color:black;">Sky</option>
+      <option value="#2c3e1f" style="background-color:#2c3e1f; color:white;">Dark Forest</option>
+      <option value="#d4aa00" style="background-color:#d4aa00; color:black;">Sunlight</option>
+      <option value="#5c4033" style="background-color:#5c4033; color:white;">Wood</option>
+      <option value="#556b2f" style="background-color:#556b2f; color:white;">Olive</option>
+      <option value="#228b22" style="background-color:#228b22; color:white;">Forest</option>
+      <option value="#b8860b" style="background-color:#b8860b; color:white;">Golden</option>
+    </select>
+    <button type="submit">Add</button>
+    <button type="button" id="resetBtn">Reset</button>
+    <button type="button" id="downloadBtn">Download</button>
+    <button type="button" id="clearCacheBtn">Clear Cache</button>
+  </form>
+
+  <div class="clocks">
+    <div class="clock-block">
+      <h2>AM</h2>
+      <canvas id="amClock" width="400" height="400"></canvas>
+    </div>
+    <div class="clock-block">
+      <h2>PM</h2>
+      <canvas id="pmClock" width="400" height="400"></canvas>
+    </div>
+  </div>
+
+  <div id="legend">
+    <h2>AM Activities</h2>
+    <div id="amLegend"></div>
+    <h2>PM Activities</h2>
+    <div id="pmLegend"></div>
+  </div>
+
+  <script>
+    const canvasAM = document.getElementById("amClock");
+    const canvasPM = document.getElementById("pmClock");
+    const ctxAM = canvasAM.getContext("2d");
+    const ctxPM = canvasPM.getContext("2d");
+    const cx = 200, cy = 200, r = 170;
+
+    let schedule = [];
+    const saved = localStorage.getItem("dailyClockDataBlocky");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      schedule = parsed.schedule || [];
+      document.getElementById("username").value = parsed.username || "";
+    }
+
+    function isDark(hex) {
+      const rgb = parseInt(hex.slice(1), 16);
+      const r = (rgb >> 16) & 0xff;
+      const g = (rgb >> 8) & 0xff;
+      const b = rgb & 0xff;
+      const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+      return brightness < 140;
+    }
+
+    function drawClock(ctx, canvasId, isAM) {
+      ctx.clearRect(0, 0, 400, 400);
+      const angle = (h) => (h / 12) * 2 * Math.PI - Math.PI / 2;
+
+      schedule.forEach(({ from, to, color, label }) => {
+        const visibleStart = Math.max(from, isAM ? 0 : 12);
+        const visibleEnd = Math.min(to, isAM ? 12 : 24);
+        if (visibleEnd <= visibleStart) return;
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, angle(visibleStart % 12), angle(visibleEnd % 12));
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        const mid = (visibleStart + visibleEnd) / 2;
+        const angleMid = angle(mid % 12);
+        const tx = cx + Math.cos(angleMid) * 100;
+        const ty = cy + Math.sin(angleMid) * 100;
+        ctx.fillStyle = isDark(color) ? "white" : "black";
+        ctx.font = "16px VT323";
+        ctx.fillText(label, tx - ctx.measureText(label).width / 2, ty + 5);
+      });
+
+      ctx.strokeStyle = "#2c3e1f";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+      ctx.fillStyle = "#2c3e1f";
+      ctx.font = "bold 18px VT323";
+      for (let i = 1; i <= 12; i++) {
+        const a = angle(i);
+        const tx = cx + Math.cos(a) * 140;
+        const ty = cy + Math.sin(a) * 140 + 6;
+        const label = i === 12 ? "00/12" : i.toString();
+        ctx.fillText(label, tx - ctx.measureText(label).width / 2, ty);
+      }
+      ctx.stroke();
+    }
+
+    function renderLegend(schedule) {
+      const amLegend = document.getElementById("amLegend");
+      const pmLegend = document.getElementById("pmLegend");
+      amLegend.innerHTML = "";
+      pmLegend.innerHTML = "";
+
+      const sorted = [...schedule].sort((a, b) => a.from - b.from);
+      sorted.forEach(({ label, color, from, to }) => {
+        const item = document.createElement("div");
+        item.className = "legend-item";
+        const box = document.createElement("span");
+        box.className = "legend-box";
+        box.style.backgroundColor = color;
+        const text = document.createElement("span");
+        text.textContent = `${label} (${from.toFixed(2)}–${to.toFixed(2)})`;
+        item.appendChild(box);
+        item.appendChild(text);
+
+        if (from < 12) {
+          amLegend.appendChild(item);
+        } else {
+          pmLegend.appendChild(item);
+        }
+      });
+    }
+
+    document.getElementById("activityForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const label = document.getElementById("label").value;
+      const from = parseFloat(document.getElementById("from").value.split(":"[0])) + parseFloat(document.getElementById("from").value.split(":"[1])) / 60;
+      const to = parseFloat(document.getElementById("to").value.split(":"[0])) + parseFloat(document.getElementById("to").value.split(":"[1])) / 60;
+      const color = document.getElementById("color").value;
+      const username = document.getElementById("username").value;
+      if (!username.trim()) return alert("Please enter your name.");
+      if (to <= from) return alert("End time must be after start time.");
+
+      schedule.push({ label, from, to, color });
+      localStorage.setItem("dailyClockDataBlocky", JSON.stringify({ username, schedule }));
+      renderLegend(schedule);
+      drawClock(ctxAM, "amClock", true);
+      drawClock(ctxPM, "pmClock", false);
+      e.target.reset();
+      document.getElementById("username").value = username;
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      schedule = [];
+      localStorage.setItem("dailyClockDataBlocky", JSON.stringify({ username: document.getElementById("username").value, schedule }));
+      renderLegend(schedule);
+      drawClock(ctxAM, "amClock", true);
+      drawClock(ctxPM, "pmClock", false);
+    });
+
+    document.getElementById("downloadBtn").addEventListener("click", () => {
+      const username = document.getElementById("username").value.trim() || "daily_schedule";
+      const blob = new Blob([JSON.stringify({ username, schedule }, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${username.replace(/\s+/g, '_')}_schedule.json`;
+      a.click();
+    });
+
+    document.getElementById("clearCacheBtn").addEventListener("click", () => {
+      if (confirm("Are you sure you want to clear everything and start fresh?")) {
+        localStorage.removeItem("dailyClockDataBlocky");
+        schedule = [];
+        document.getElementById("username").value = "";
+        renderLegend(schedule);
+        drawClock(ctxAM, "amClock", true);
+        drawClock(ctxPM, "pmClock", false);
+      }
+    });
+
+    document.fonts.ready.then(() => {
+      drawClock(ctxAM, "amClock", true);
+      drawClock(ctxPM, "pmClock", false);
+      renderLegend(schedule);
+    });
+  </script>
+</body>
+</html>
