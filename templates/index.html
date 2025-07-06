@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Daily Clock</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <h1>My 12-Hour Daily Clock</h1>
+
+  <div class="clocks">
+    <div>
+      <h2>AM</h2>
+      <canvas id="amClock" width="400" height="400"></canvas>
+    </div>
+    <div>
+      <h2>PM</h2>
+      <canvas id="pmClock" width="400" height="400"></canvas>
+    </div>
+  </div>
+
+  <div id="legend"></div>
+
+  <script>
+    const schedule = [
+      { from: 0, to: 8, color: "#f4a7b9", label: "Sleep" },
+      { from: 8, to: 9, color: "#ffd3e2", label: "Coffee" },
+      { from: 9, to: 12, color: "#b2dce9", label: "Study" },
+      { from: 12, to: 13, color: "#e2c2f0", label: "Nap" },
+      { from: 13, to: 15, color: "#c49dff", label: "Gym" },
+      { from: 15, to: 16, color: "#ff9ac1", label: "Relax" },
+      { from: 16, to: 18, color: "#bfe9db", label: "Cook & Eat" },
+      { from: 18, to: 22, color: "#a4d4eb", label: "Study" },
+      { from: 22, to: 22.75, color: "#f49ac2", label: "Beauty" },
+      { from: 22.75, to: 24, color: "#AEC6CF", label: "Game" }
+    ];
+
+    function drawClock(canvasId, isAM) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext("2d");
+      const cx = 200, cy = 200, r = 170;
+
+      ctx.clearRect(0, 0, 400, 400);
+
+      const angle = (h) => (h / 12) * 2 * Math.PI - Math.PI / 2;
+
+      schedule.forEach(({ from, to, color, label }) => {
+        const visibleStart = Math.max(from, isAM ? 0 : 12);
+        const visibleEnd = Math.min(to, isAM ? 12 : 24);
+        if (visibleEnd <= visibleStart) return;
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, angle(visibleStart % 12), angle(visibleEnd % 12));
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        const mid = (visibleStart + visibleEnd) / 2;
+        const angleMid = angle(mid % 12);
+        const tx = cx + Math.cos(angleMid) * 100;
+        const ty = cy + Math.sin(angleMid) * 100;
+        ctx.fillStyle = "#444";
+        ctx.font = "12px Poppins";
+        ctx.fillText(label, tx - ctx.measureText(label).width / 2, ty + 4);
+      });
+
+      ctx.fillStyle = "#b15485";
+      ctx.font = "bold 18px Poppins";
+      for (let i = 1; i <= 12; i++) {
+        let hourLabel = i === 12 ? "00/12" : (isAM ? i : (i + 12) % 24 || "00");
+        const a = angle(i);
+        const tx = cx + Math.cos(a) * 140;
+        const ty = cy + Math.sin(a) * 140 + 6;
+        ctx.fillText(hourLabel.toString(), tx - ctx.measureText(hourLabel).width / 2, ty);
+      }
+
+      const now = new Date();
+      const h = now.getHours();
+      const m = now.getMinutes();
+      const s = now.getSeconds();
+      const show = isAM ? h < 12 : h >= 12;
+      if (show) {
+        const hour = h % 12 + m / 60;
+        const angleHour = angle(hour);
+        const angleSec = (s / 60) * 2 * Math.PI - Math.PI / 2;
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(angleHour) * (r - 30), cy + Math.sin(angleHour) * (r - 30));
+        ctx.strokeStyle = "#d66a9c";
+        ctx.lineWidth = 3;
+        ctx.lineCap = "round";
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(angleSec) * (r - 20), cy + Math.sin(angleSec) * (r - 20));
+        ctx.strokeStyle = "#ff69b4";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+      ctx.strokeStyle = "#b15485";
+      ctx.lineWidth = 4;
+      ctx.stroke();
+    }
+
+    function renderLegend(schedule) {
+      const container = document.getElementById("legend");
+      container.innerHTML = "";
+      schedule.forEach(({ label, color, from, to }) => {
+        const item = document.createElement("div");
+        item.className = "legend-item";
+        const box = document.createElement("span");
+        box.className = "legend-box";
+        box.style.backgroundColor = color;
+        const text = document.createElement("span");
+        text.textContent = `${label} (${from}:00–${to}:00)`;
+        item.appendChild(box);
+        item.appendChild(text);
+        container.appendChild(item);
+      });
+    }
+
+    document.fonts.ready.then(() => {
+      function update() {
+        drawClock("amClock", true);
+        drawClock("pmClock", false);
+      }
+      update();
+      setInterval(update, 1000);
+      renderLegend(schedule);
+    });
+  </script>
+
+</body>
+</html>
