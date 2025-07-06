@@ -4,10 +4,35 @@
   <meta charset="UTF-8" />
   <title>My Daily Clock</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
   <h1>My 12-Hour Daily Clock</h1>
+
+  <form id="activityForm">
+    <h2>Set Your Day</h2>
+    <input type="text" id="username" placeholder="Your name" required>
+    <input type="text" id="label" placeholder="Activity name" required>
+    <input type="time" id="from" required>
+    <input type="time" id="to" required>
+    <select id="color" required>
+      <option value="#f4a7b9">Blush Pink</option>
+      <option value="#ffd3e2">Soft Rose</option>
+      <option value="#f49ac2">Pink Sherbet</option>
+      <option value="#d66a9c">Deep Rose</option>
+      <option value="#b15485">Berry</option>
+      <option value="#e2c2f0">Lavender</option>
+      <option value="#c49dff">Lilac</option>
+      <option value="#b2dce9">Light Teal</option>
+      <option value="#a4d4eb">Sky Teal</option>
+      <option value="#bfe9db">Mint Teal</option>
+    </select>
+    <button type="submit">Add</button>
+    <button type="button" id="resetBtn">Reset</button>
+    <button type="button" id="downloadBtn">Download</button>
+    <button type="button" id="clearCacheBtn">Clear Cache</button>
+  </form>
 
   <div class="clocks">
     <div>
@@ -20,21 +45,29 @@
     </div>
   </div>
 
-  <div id="legend"></div>
+  <div id="legend">
+    <h2>AM Activities</h2>
+    <div id="amLegend"></div>
+    <h2>PM Activities</h2>
+    <div id="pmLegend"></div>
+  </div>
 
   <script>
-    const schedule = [
-      { from: 0, to: 8, color: "#f4a7b9", label: "Sleep" },
-      { from: 8, to: 9, color: "#ffd3e2", label: "Coffee" },
-      { from: 9, to: 12, color: "#b2dce9", label: "Study" },
-      { from: 12, to: 13, color: "#e2c2f0", label: "Nap" },
-      { from: 13, to: 15, color: "#c49dff", label: "Gym" },
-      { from: 15, to: 16, color: "#ff9ac1", label: "Relax" },
-      { from: 16, to: 18, color: "#bfe9db", label: "Cook & Eat" },
-      { from: 18, to: 22, color: "#a4d4eb", label: "Study" },
-      { from: 22, to: 22.75, color: "#f49ac2", label: "Beauty" },
-      { from: 22.75, to: 24, color: "#AEC6CF", label: "Game" }
-    ];
+    let schedule = [];
+    const defaultSchedule = [];
+
+    const saved = localStorage.getItem("dailyClockData");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      schedule = parsed.schedule || [];
+      document.getElementById("username").value = parsed.username || "";
+    }
+
+    function toHHMM(decimal) {
+      const h = Math.floor(decimal);
+      const m = Math.round((decimal - h) * 60);
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+    }
 
     function drawClock(canvasId, isAM) {
       const canvas = document.getElementById(canvasId);
@@ -110,21 +143,96 @@
     }
 
     function renderLegend(schedule) {
-      const container = document.getElementById("legend");
-      container.innerHTML = "";
-      schedule.forEach(({ label, color, from, to }) => {
+      const amLegend = document.getElementById("amLegend");
+      const pmLegend = document.getElementById("pmLegend");
+      amLegend.innerHTML = "";
+      pmLegend.innerHTML = "";
+
+      const sorted = [...schedule].sort((a, b) => a.from - b.from);
+
+      sorted.forEach(({ label, color, from, to }) => {
         const item = document.createElement("div");
         item.className = "legend-item";
         const box = document.createElement("span");
         box.className = "legend-box";
         box.style.backgroundColor = color;
         const text = document.createElement("span");
-        text.textContent = `${label} (${from}:00–${to}:00)`;
+        text.textContent = `${label} (${toHHMM(from)}–${toHHMM(to)})`;
         item.appendChild(box);
         item.appendChild(text);
-        container.appendChild(item);
+
+        if (from < 12) {
+          amLegend.appendChild(item);
+        } else {
+          pmLegend.appendChild(item);
+        }
       });
     }
+
+    function saveToLocalStorage() {
+      const username = document.getElementById("username").value;
+      localStorage.setItem("dailyClockData", JSON.stringify({ username, schedule }));
+    }
+
+    document.getElementById("activityForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const label = document.getElementById("label").value;
+      const fromTime = document.getElementById("from").value;
+      const toTime = document.getElementById("to").value;
+      const color = document.getElementById("color").value;
+      const username = document.getElementById("username").value;
+
+      const fromHour = parseFloat(fromTime.split(":")[0]) + parseFloat(fromTime.split(":")[1]) / 60;
+      const toHour = parseFloat(toTime.split(":")[0]) + parseFloat(toTime.split(":")[1]) / 60;
+
+      if (!username.trim()) {
+        alert("Please enter your name.");
+        return;
+      }
+
+      if (toHour <= fromHour) {
+        alert("End time must be after start time.");
+        return;
+      }
+
+      schedule.push({ from: fromHour, to: toHour, color, label });
+      saveToLocalStorage();
+      renderLegend(schedule);
+      drawClock("amClock", true);
+      drawClock("pmClock", false);
+
+      e.target.reset();
+      document.getElementById("username").value = username; // keep name
+    });
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      schedule = [];
+      renderLegend(schedule);
+      drawClock("amClock", true);
+      drawClock("pmClock", false);
+      saveToLocalStorage();
+    });
+
+    document.getElementById("downloadBtn").addEventListener("click", () => {
+      const username = document.getElementById("username").value.trim() || "daily_schedule";
+      const blob = new Blob([JSON.stringify({ username, schedule }, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${username.replace(/\s+/g, '_')}_schedule.json`;
+      a.click();
+    });
+
+    document.getElementById("clearCacheBtn").addEventListener("click", () => {
+      if (confirm("Are you sure you want to clear everything and start fresh?")) {
+        localStorage.removeItem("dailyClockData");
+        schedule = [];
+        document.getElementById("username").value = "";
+        renderLegend(schedule);
+        drawClock("amClock", true);
+        drawClock("pmClock", false);
+      }
+    });
 
     document.fonts.ready.then(() => {
       function update() {
